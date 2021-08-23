@@ -1,0 +1,1010 @@
+---
+title: "Ext_Supplementary_Figures"
+author: "Ze Zhang"
+date: "8/20/2021"
+output: html_document
+---
+
+```{r,message=FALSE,error=FALSE,warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(ggsignif)
+library(ggpubr)
+library(tibble)
+library(minfi)
+library(GEOquery)
+```
+
+##Supplementary Figure 9
+```{r, message=FALSE,error=FALSE,warning=FALSE}
+load("GSE88824_Pred.RDATA")
+pheno<-rownames_to_column(pheno)
+pheno_disease<-pheno %>% select(rowname,source_name_ch1,`cell type:ch1`,`disease state:ch1`)
+GSE88824_Pred<-rownames_to_column(as.data.frame(GSE88824_Pred))
+PCF<-inner_join(pheno_disease,GSE88824_Pred, by ="rowname")
+
+Whole_blood<-PCF %>% filter(`cell type:ch1` == "WholeBlood")
+
+
+
+stackprojection<-Whole_blood[,5:16]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(12,Whole_blood$`disease state:ch1`)))
+stackprojection$region<-region$value
+colnames(stackprojection)<-c("Projection","CellType","Sample")
+
+#cbbPalette <- c("#E69F00", "#56B4E9")
+ggplot(stackprojection, aes(x=CellType, y=Projection, fill=Sample)) + 
+  geom_boxplot(outlier.size=0.5, fatten = 1)+
+  stat_compare_means(aes(group = Sample),label = "p.format",method = "wilcox.test",size = 4)+#ggtitle("Immune Cell Projection in Multiple Sclerosis ")+
+  #scale_fill_manual(values=cbbPalette)+
+  ylab("Projection (%)")+xlab("")+scale_fill_discrete(name = "Sample", labels = c("Multiple Sclerosis", "Healthy Controls"))+
+  theme( legend.position="top",legend.title = element_text( size=15, 
+                                                           face="bold"),
+         legend.text = element_text(size=15, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 15, face = "bold" ),
+         axis.text.y = element_text(size = 15, face = "bold" ),
+         axis.title =  element_text( size = 26 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+
+```
+
+
+##Supplementary Figure 10
+```{r,message=FALSE,error=FALSE,warning=FALSE}
+load("GSE42861_Pred.RDATA")
+GSE42861_Ext_Pred<-as.data.frame(GSE42861_Ext_Pred)
+GSE42861_Ext_Pred<-rownames_to_column(GSE42861_Ext_Pred)
+pheno<-rownames_to_column(pheno)
+pheno_disease<-pheno %>% select(rowname,characteristics_ch1.1)
+
+PCF<-inner_join(pheno_disease,GSE42861_Ext_Pred, by ="rowname")
+
+stackprojection<-PCF[,3:14]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(12,PCF$characteristics_ch1.1)))
+stackprojection$region<-region$value
+colnames(stackprojection)<-c("Projection","CellType","Sample")
+
+
+ggplot(stackprojection, aes(x=CellType, y=Projection, fill=factor(Sample, levels=c("disease state: rheumatoid arthritis","disease state: Normal"))))+ 
+  geom_boxplot(outlier.size=0.5, fatten = 1)+scale_y_continuous(breaks=seq(0, 100, 10), limits=c(0, 100))+
+  stat_compare_means(aes(group = Sample),label = "p.format",method = "wilcox.test",size = 4)+#ggtitle("Immune Cell Projection in Multiple Sclerosis ")+
+  #scale_fill_manual(values=cbbPalette)+
+  ylab("Projection (%)")+xlab("")+scale_fill_discrete(name = "Sample", labels = c("Rheumatoid Arthritis", "Healthy Controls"))+
+  theme( legend.position="top",legend.title = element_text( size=15, 
+                                                            face="bold"),
+         legend.text = element_text(size=15, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 15, face = "bold" ),
+         axis.text.y = element_text(size = 15, face = "bold" ),
+         axis.title =  element_text( size = 26 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+```
+##Supplementary Figure 11
+```{r, message=FALSE,error=FALSE,warning=FALSE}
+load("GSE140038_Pred.RDATA")
+GSE140038_Pred<-rownames_to_column(as.data.frame(GSE140038_Pred))
+GSE140038_Pred$geo_accession<-substr(GSE140038_Pred$rowname,1,10)
+pheno_140038_age<-pheno %>% select(geo_accession,`age:ch1`,`chemotherapy any:ch1`,`radiationtherapy any:ch1`,`time point:ch1`)
+GSE140038_Pred_1<-inner_join(GSE140038_Pred,pheno_140038_age,by = "geo_accession")
+table(pheno$`time point:ch1`)
+colnames(GSE140038_Pred_1)[15:18]<-c("Age","Chemo","Radition","time")
+GSE140038_Pred_chemo<-GSE140038_Pred_1 %>% filter(Chemo == 1)
+GSE140038_Pred_radio<-GSE140038_Pred_1 %>% filter(Chemo == 0)
+
+stackprojection<-GSE140038_Pred_chemo[,2:13]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(12,GSE140038_Pred_chemo$time)))
+stackprojection$region<-region$value
+colnames(stackprojection)<-c("Projection","CellType","Treatment")
+
+ggplot(stackprojection, aes(x =CellType, y = Projection, fill= Treatment))+ 
+  geom_boxplot(outlier.size=0.5, fatten = 1)+
+  stat_compare_means(aes(group = Treatment),label = "p.format",method = "wilcox.test",size = 4)+#ggtitle("Immune Cell Projection in Multiple Sclerosis ")+
+  #scale_fill_manual(values=cbbPalette)+
+  scale_y_continuous(breaks=seq(0, 100, 10), limits=c(0, 100))+
+  ylab("Projection (%)")+xlab("")+ggtitle("Radiation-therapy and Chemotherapy")+scale_fill_discrete( labels = c("Pre-treatment", "Post-treatment"))+
+  theme( legend.position="top",legend.title = element_blank(),
+         legend.text = element_text(size=15, 
+                                    face="bold"),
+         plot.title = element_text(hjust = 0.5, face = "bold",size = 20),
+         axis.text.x = element_text(size = 15, face = "bold" ),
+         axis.text.y = element_text(size = 15, face = "bold" ),
+         axis.title =  element_text( size = 26 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+stackprojection<-GSE140038_Pred_radio[,2:13]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(12,GSE140038_Pred_radio$time)))
+stackprojection$region<-region$value
+colnames(stackprojection)<-c("Projection","CellType","Treatment")
+
+ggplot(stackprojection, aes(x =CellType, y = Projection, fill= Treatment))+ 
+  geom_boxplot(outlier.size=0.5, fatten = 1)+
+  stat_compare_means(aes(group = Treatment),label = "p.format",method = "wilcox.test",size = 4)+#ggtitle("Immune Cell Projection in Multiple Sclerosis ")+
+  #scale_fill_manual(values=cbbPalette)+
+  scale_y_continuous(breaks=seq(0, 100, 10), limits=c(0, 100))+
+  ylab("Projection (%)")+xlab("")+ggtitle("Radiation-therapy")+scale_fill_discrete( labels = c("Pre-treatment", "Post-treatment"))+
+  theme( legend.position="top",legend.title = element_blank(),
+         legend.text = element_text(size=15, 
+                                    face="bold"),
+         plot.title = element_text(hjust = 0.5, face = "bold",size = 20),
+         axis.text.x = element_text(size = 15, face = "bold" ),
+         axis.text.y = element_text(size = 15, face = "bold" ),
+         axis.title =  element_text( size = 26 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+```
+
+
+
+##Supplementary Figure 12
+```{r, message=FALSE,error=FALSE,warning=FALSE}
+load("GSE161678_Pred.RDATA")
+geoMat <- getGEO("GSE161678")
+pheno <- pData(geoMat[[1]])
+GSE161678_pheno<-as.data.frame(pheno)
+
+GSE161678_Pred<-rownames_to_column(as.data.frame(GSE161678_Pred))
+colnames(GSE161678_Pred)[1]<-"geo_accession"
+GSE161678_Pred$geo_accession<-substr(GSE161678_Pred$geo_accession,1,10)
+GSE161678_Pred_2<-inner_join(GSE161678_Pred,GSE161678_pheno,by = "geo_accession")
+
+
+GSE161678_case<-GSE161678_Pred_2 %>% filter(`remission:ch1` != "Healthy")
+
+GSE161678_Pred_2$case<-ifelse(GSE161678_Pred_2$`remission:ch1` != "Healthy","Case","Control")
+
+
+
+stackprojection2<-GSE161678_Pred_2[,2:13]
+stackprojection2<-as.data.frame(stack(stackprojection2))
+Case<-as.data.frame(stack(replicate(12,GSE161678_Pred_2$case)))
+Remission<-as.data.frame(stack(replicate(12,GSE161678_Pred_2$`remission:ch1`)))
+stackprojection2$case<-Case$value
+stackprojection2$remission<-Remission$value
+colnames(stackprojection2)<-c("Projection","CellType","Sample","remission")
+
+ggplot(stackprojection2, aes(x=CellType, y=Projection, fill=remission)) + 
+  geom_boxplot(outlier.size=0.5, fatten = 1)+
+  #stat_compare_means(aes(group = Sample),method = "wilcox.test", label = "p", size = 5 )+#ggtitle("Immune Cell Projection in Multiple Sclerosis ")+
+  #scale_fill_manual(values=cbbPalette)+
+  ylab("Projection (%)")+xlab("")+scale_fill_discrete(name = "Sample Type", labels = c("Healthy", "No Remission", "Remission"))+
+  scale_y_continuous(breaks=seq(0, 100, 10), limits=c(0, 100))+
+  theme( legend.position="top",legend.title = element_text( size=15, 
+                                                            face="bold"),
+         legend.text = element_text(size=15, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 15, face = "bold" ),
+         axis.text.y = element_text(size = 15, face = "bold" ),
+         axis.title =  element_text( size = 26 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+
+```
+
+##Supplementary Figure 13
+```{r, message=FALSE,error=FALSE,warning=FALSE}
+load("GSE105018_Pred.RDATA")
+
+cellcounttwins2<-as.data.frame(cellcounttwins2)
+cellcounttwins2<-rownames_to_column(cellcounttwins2)
+cellcounttwins2$rowname<-substr(cellcounttwins2$rowname,1,10)
+
+
+
+MZ_pred<-cellcounttwins2[cellcounttwins2$rowname %in% rownames(MZ_pheno),]
+DZ_pred<-cellcounttwins2[cellcounttwins2$rowname %in% rownames(DZ_pheno),]
+MZ_pheno<-rownames_to_column(MZ_pheno)
+DZ_pheno<-rownames_to_column(DZ_pheno)
+
+MZ_pre<-inner_join(MZ_pred,MZ_pheno,by = "rowname")
+DZ_pre<-inner_join(DZ_pred,DZ_pheno,by = "rowname")
+
+
+#-------------------------------------------------------------------------------------------------------------
+
+##Bas
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Bmem,.by_group = TRUE)
+
+Baso<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$BasoID<-Baso$value
+MZ_Baso<-data.frame("high"=MZ_pre_1[MZ_pre_1$BasoID == 2,"Bas"],"low"=MZ_pre_1[MZ_pre_1$BasoID == 1,"Bas"],Twin="MZ")
+MZ_Baso$delta<-MZ_Baso[,2]-MZ_Baso[,1]
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Bas,.by_group = TRUE)
+
+Baso<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$BasoID<-Baso$value
+
+
+DZ_Baso<-data.frame("high"=DZ_pre_1[DZ_pre_1$BasoID == 2,"Bas"],"low"=DZ_pre_1[DZ_pre_1$BasoID == 1,"Bas"],Twin="DZ")
+DZ_Baso$delta<-DZ_Baso[,2]-DZ_Baso[,1]
+
+
+Baso_delta<-rbind(MZ_Baso,DZ_Baso)
+Baso_delta$CellType<-"Bas"
+
+
+#----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Bmem,.by_group = TRUE)
+
+Bmem<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$BmemID<-Bmem$value
+MZ_Bmem<-data.frame("high"=MZ_pre_1[MZ_pre_1$BmemID == 2,"Bmem"],"low"=MZ_pre_1[MZ_pre_1$BmemID == 1,"Bmem"],Twin="MZ")
+MZ_Bmem$delta<-MZ_Bmem[,2]-MZ_Bmem[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Bmem,.by_group = TRUE)
+
+Bmem<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$BmemID<-Bmem$value
+DZ_Bmem<-data.frame("high"=DZ_pre_1[DZ_pre_1$BmemID == 2,"Bmem"],"low"=DZ_pre_1[DZ_pre_1$BmemID == 1,"Bmem"],Twin="DZ")
+DZ_Bmem$delta<-DZ_Bmem[,2]-DZ_Bmem[,1]
+
+Bmem_delta<-rbind(MZ_Bmem,DZ_Bmem)
+Bmem_delta$CellType<-"Bmem"
+
+#-----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Bnv,.by_group = TRUE)
+
+Bnv<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$BnvID<-Bnv$value
+MZ_Bnv<-data.frame("high"=MZ_pre_1[MZ_pre_1$BnvID == 2,"Bnv"],"low"=MZ_pre_1[MZ_pre_1$BnvID == 1,"Bnv"],Twin="MZ")
+MZ_Bnv$delta<-MZ_Bnv[,2]-MZ_Bnv[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Bnv,.by_group = TRUE)
+
+Bnv<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$BnvID<-Bnv$value
+DZ_Bnv<-data.frame("high"=DZ_pre_1[DZ_pre_1$BnvID == 2,"Bnv"],"low"=DZ_pre_1[DZ_pre_1$BnvID == 1,"Bnv"],Twin="DZ")
+DZ_Bnv$delta<-DZ_Bnv[,2]-DZ_Bnv[,1]
+
+Bnv_delta<-rbind(MZ_Bnv,DZ_Bnv)
+Bnv_delta$CellType<-"Bnv"
+
+#-----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(CD4mem,.by_group = TRUE)
+
+CD4mem<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$CD4memID<-CD4mem$value
+MZ_CD4mem<-data.frame("high"=MZ_pre_1[MZ_pre_1$CD4memID == 2,"CD4mem"],"low"=MZ_pre_1[MZ_pre_1$CD4memID == 1,"CD4mem"],Twin="MZ")
+MZ_CD4mem$delta<-MZ_CD4mem[,2]-MZ_CD4mem[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(CD4mem,.by_group = TRUE)
+
+CD4mem<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$CD4memID<-CD4mem$value
+DZ_CD4mem<-data.frame("high"=DZ_pre_1[DZ_pre_1$CD4memID == 2,"CD4mem"],"low"=DZ_pre_1[DZ_pre_1$CD4memID == 1,"CD4mem"],Twin="DZ")
+DZ_CD4mem$delta<-DZ_CD4mem[,2]-DZ_CD4mem[,1]
+
+CD4mem_delta<-rbind(MZ_CD4mem,DZ_CD4mem)
+CD4mem_delta$CellType<-"CD4mem"
+#-----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(CD4nv,.by_group = TRUE)
+
+CD4nv<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$CD4nvID<-CD4nv$value
+MZ_CD4nv<-data.frame("high"=MZ_pre_1[MZ_pre_1$CD4nvID == 2,"CD4nv"],"low"=MZ_pre_1[MZ_pre_1$CD4nvID == 1,"CD4nv"],Twin="MZ")
+MZ_CD4nv$delta<-MZ_CD4nv[,2]-MZ_CD4nv[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(CD4nv,.by_group = TRUE)
+
+CD4nv<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$CD4nvID<-CD4nv$value
+DZ_CD4nv<-data.frame("high"=DZ_pre_1[DZ_pre_1$CD4nvID == 2,"CD4nv"],"low"=DZ_pre_1[DZ_pre_1$CD4nvID == 1,"CD4nv"],Twin="DZ")
+DZ_CD4nv$delta<-DZ_CD4nv[,2]-DZ_CD4nv[,1]
+
+CD4nv_delta<-rbind(MZ_CD4nv,DZ_CD4nv)
+CD4nv_delta$CellType<-"CD4nv"
+#-----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(CD8mem,.by_group = TRUE)
+
+CD8mem<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$CD8memID<-CD8mem$value
+MZ_CD8mem<-data.frame("high"=MZ_pre_1[MZ_pre_1$CD8memID == 2,"CD8mem"],"low"=MZ_pre_1[MZ_pre_1$CD8memID == 1,"CD8mem"],Twin="MZ")
+MZ_CD8mem$delta<-MZ_CD8mem[,2]-MZ_CD8mem[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(CD8mem,.by_group = TRUE)
+
+CD8mem<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$CD8memID<-CD8mem$value
+DZ_CD8mem<-data.frame("high"=DZ_pre_1[DZ_pre_1$CD8memID == 2,"CD8mem"],"low"=DZ_pre_1[DZ_pre_1$CD8memID == 1,"CD8mem"],Twin="DZ")
+DZ_CD8mem$delta<-DZ_CD8mem[,2]-DZ_CD8mem[,1]
+
+CD8mem_delta<-rbind(MZ_CD8mem,DZ_CD8mem)
+CD8mem_delta$CellType<-"CD8mem"
+#-----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(CD8nv,.by_group = TRUE)
+
+CD8nv<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$CD8nvID<-CD8nv$value
+MZ_CD8nv<-data.frame("high"=MZ_pre_1[MZ_pre_1$CD8nvID == 2,"CD8nv"],"low"=MZ_pre_1[MZ_pre_1$CD8nvID == 1,"CD8nv"],Twin="MZ")
+MZ_CD8nv$delta<-MZ_CD8nv[,2]-MZ_CD8nv[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(CD8nv,.by_group = TRUE)
+
+CD8nv<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$CD8nvID<-CD8nv$value
+DZ_CD8nv<-data.frame("high"=DZ_pre_1[DZ_pre_1$CD8nvID == 2,"CD8nv"],"low"=DZ_pre_1[DZ_pre_1$CD8nvID == 1,"CD8nv"],Twin="DZ")
+DZ_CD8nv$delta<-DZ_CD8nv[,2]-DZ_CD8nv[,1]
+
+CD8nv_delta<-rbind(MZ_CD8nv,DZ_CD8nv)
+CD8nv_delta$CellType<-"CD8nv"
+#-----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Eos,.by_group = TRUE)
+
+Eos<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$EosID<-Eos$value
+MZ_Eos<-data.frame("high"=MZ_pre_1[MZ_pre_1$EosID == 2,"Eos"],"low"=MZ_pre_1[MZ_pre_1$EosID == 1,"Eos"],Twin="MZ")
+MZ_Eos$delta<-MZ_Eos[,2]-MZ_Eos[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Eos,.by_group = TRUE)
+
+Eos<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$EosID<-Eos$value
+DZ_Eos<-data.frame("high"=DZ_pre_1[DZ_pre_1$EosID == 2,"Eos"],"low"=DZ_pre_1[DZ_pre_1$EosID == 1,"Eos"],Twin="DZ")
+DZ_Eos$delta<-DZ_Eos[,2]-DZ_Eos[,1]
+
+Eos_delta<-rbind(MZ_Eos,DZ_Eos)
+Eos_delta$CellType<-"Eos"
+#-----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Mono,.by_group = TRUE)
+
+Mono<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$MonoID<-Mono$value
+MZ_Mono<-data.frame("high"=MZ_pre_1[MZ_pre_1$MonoID == 2,"Mono"],"low"=MZ_pre_1[MZ_pre_1$MonoID == 1,"Mono"],Twin="MZ")
+MZ_Mono$delta<-MZ_Mono[,2]-MZ_Mono[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Mono,.by_group = TRUE)
+
+Mono<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$MonoID<-Mono$value
+DZ_Mono<-data.frame("high"=DZ_pre_1[DZ_pre_1$MonoID == 2,"Mono"],"low"=DZ_pre_1[DZ_pre_1$MonoID == 1,"Mono"],Twin="DZ")
+DZ_Mono$delta<-DZ_Mono[,2]-DZ_Mono[,1]
+
+Mono_delta<-rbind(MZ_Mono,DZ_Mono)
+Mono_delta$CellType<-"Mono"
+#-----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Neu,.by_group = TRUE)
+
+Neu<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$NeuID<-Neu$value
+MZ_Neu<-data.frame("high"=MZ_pre_1[MZ_pre_1$NeuID == 2,"Neu"],"low"=MZ_pre_1[MZ_pre_1$NeuID == 1,"Neu"],Twin="MZ")
+MZ_Neu$delta<-MZ_Neu[,2]-MZ_Neu[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Neu,.by_group = TRUE)
+
+Neu<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$NeuID<-Neu$value
+DZ_Neu<-data.frame("high"=DZ_pre_1[DZ_pre_1$NeuID == 2,"Neu"],"low"=DZ_pre_1[DZ_pre_1$NeuID == 1,"Neu"],Twin="DZ")
+DZ_Neu$delta<-DZ_Neu[,2]-DZ_Neu[,1]
+
+Neu_delta<-rbind(MZ_Neu,DZ_Neu)
+Neu_delta$CellType<-"Neu"
+#-----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(NK,.by_group = TRUE)
+
+NK<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$NKID<-NK$value
+MZ_NK<-data.frame("high"=MZ_pre_1[MZ_pre_1$NKID == 2,"NK"],"low"=MZ_pre_1[MZ_pre_1$NKID == 1,"NK"],Twin="MZ")
+MZ_NK$delta<-MZ_NK[,2]-MZ_NK[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(NK,.by_group = TRUE)
+
+NK<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$NKID<-NK$value
+DZ_NK<-data.frame("high"=DZ_pre_1[DZ_pre_1$NKID == 2,"NK"],"low"=DZ_pre_1[DZ_pre_1$NKID == 1,"NK"],Twin="DZ")
+DZ_NK$delta<-DZ_NK[,2]-DZ_NK[,1]
+
+NK_delta<-rbind(MZ_NK,DZ_NK)
+NK_delta$CellType<-"NK"
+#-----------------------------------------------------------------------------------------------------------------------
+MZ_pre_1<-MZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Treg,.by_group = TRUE)
+
+Treg<-as.data.frame(stack(replicate(426,c(2,1))))
+MZ_pre_1$TregID<-Treg$value
+MZ_Treg<-data.frame("high"=MZ_pre_1[MZ_pre_1$TregID == 2,"Treg"],"low"=MZ_pre_1[MZ_pre_1$TregID == 1,"Treg"],Twin="MZ")
+MZ_Treg$delta<-MZ_Treg[,2]-MZ_Treg[,1]
+
+
+
+
+DZ_pre_1<-DZ_pre %>% 
+  group_by(family) %>% 
+  arrange(Treg,.by_group = TRUE)
+
+Treg<-as.data.frame(stack(replicate(306,c(2,1))))
+DZ_pre_1$TregID<-Treg$value
+DZ_Treg<-data.frame("high"=DZ_pre_1[DZ_pre_1$TregID == 2,"Treg"],"low"=DZ_pre_1[DZ_pre_1$TregID == 1,"Treg"],Twin="DZ")
+DZ_Treg$delta<-DZ_Treg[,2]-DZ_Treg[,1]
+
+Treg_delta<-rbind(MZ_Treg,DZ_Treg)
+Treg_delta$CellType<-"Treg"
+#-------------------------------------------------------------------------------------------
+Delta_change<-rbind(Baso_delta[,3:5],Bmem_delta[,3:5],Bnv_delta[,3:5],CD4mem_delta[,3:5],CD4nv_delta[,3:5],CD8mem_delta[,3:5],CD8nv_delta[,3:5],Eos_delta[,3:5],Mono_delta[,3:5],Neu_delta[,3:5],NK_delta[,3:5],Treg_delta[,3:5])
+
+
+colnames(Baso_delta)[1:2]<-c("low","high")
+colnames(Bmem_delta)[1:2]<-c("low","high")
+colnames(Bnv_delta)[1:2]<-c("low","high")
+colnames(CD4mem_delta)[1:2]<-c("low","high")
+colnames(CD4nv_delta)[1:2]<-c("low","high")
+colnames(CD8mem_delta)[1:2]<-c("low","high")
+colnames(CD8nv_delta)[1:2]<-c("low","high")
+colnames(Eos_delta)[1:2]<-c("low","high")
+colnames(Mono_delta)[1:2]<-c("low","high")
+colnames(Neu_delta)[1:2]<-c("low","high")
+colnames(NK_delta)[1:2]<-c("low","high")
+colnames(Treg_delta)[1:2]<-c("low","high")
+
+Delta_change$CellType1<-ifelse(Delta_change$CellType == "Bas", "Bas", ifelse(Delta_change$CellType == "CD8mem","CD8mem",ifelse(Delta_change$CellType == "CD8nv", "CD8nv", ifelse(Delta_change$CellType == "CD8T_mem","CD8mem",Delta_change$CellType))))
+ggplot(Delta_change, aes(x =CellType, y = delta, fill= Twin))+ 
+  geom_boxplot(outlier.size=0.5, fatten = 1) + ylim(c(0,40))+ 
+  stat_compare_means(aes(group = Twin),label = "p.format",method = "wilcox.test",size = 4)+#ggtitle("Immune Cell Projection in Multiple Sclerosis ")+
+  #scale_fill_manual(values=cbbPalette)+
+  ylab("Proportion Change Between Twins (%)")+xlab("")+scale_fill_discrete(name = "Sample", labels = c("Dizygotic Twins", "Monozygotic Twins"))+
+  theme( legend.position="top",legend.title = element_blank(),
+         legend.text = element_text(size=15, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 15, face = "bold" ),
+         axis.text.y = element_text(size = 15, face = "bold" ),
+         axis.title =  element_text( size = 18 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+```
+##Supplementary Figure 14
+```{r, message=FALSE,error=FALSE,warning=FALSE}
+load("Aging_Pred.RDATA")
+Aging1$Lym<-Aging1$Bnv+Aging1$Bmem+Aging1$CD4nv+Aging1$CD4mem+Aging1$CD8nv+Aging1$CD8mem+Aging1$NK+Aging1$Treg
+
+Aging1$scaled_Neu<-(Aging1$Neu/(Aging1$Neu+Aging1$Lym))*100
+Aging1$scaled_Lym<-(Aging1$Lym/(Aging1$Neu+Aging1$Lym))*100
+
+stackprojection<-Aging1[,32:33]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(2,Aging1$Age)))
+group<-as.data.frame(stack(replicate(2,Aging1$agegroup)))
+stackprojection$region<-region$value
+stackprojection$group<-group$value
+colnames(stackprojection)<-c("Projection","CellType","Age","Age_Group")
+stackprojection$Age<-as.numeric(stackprojection$Age)
+stackprojection1<-stackprojection %>% filter(!is.na(stackprojection$Age))
+stackprojection2<-stackprojection1 %>% filter(CellType == "scaled_Lym")
+
+cbbPalette <- c("#66A61E", "#D55E00")
+
+
+stackprojection2$Projection<-stackprojection2$Projection/100
+
+ggplot(stackprojection2, aes(Age, Projection)) +
+  
+  #geom_smooth() +
+  geom_ribbon(aes(ymin = 0,ymax = predict(loess(Projection ~ Age))),
+              alpha = 0.3, fill = "#D55E00")+
+  geom_ribbon(aes(ymin = predict(loess(Projection ~ Age)),ymax = 1),
+              alpha = 0.3, fill = "#66A61E") + ylab("Proportion")+
+  #scale_fill_manual("",values="grey12")+
+  scale_x_continuous(breaks=seq(0,100,10))+
+  scale_y_continuous(breaks=seq(0, 1, 0.1), limits=c(0, 1))+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+#library(grid)
+#grob <- grobTree(textGrob("Neutrophil", x=50,  y=75, hjust=0, gp=gpar(col="black", fontsize=13, fontface="italic")))
+#pt1+annotation_custom(grob)
+#-------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------
+Aging1$CD4mem_reg<-Aging1$CD4mem+Aging1$Treg
+Aging1$CD4T<-Aging1$CD4nv + Aging1$CD4mem_reg
+Aging1$CD8T<-Aging1$CD8nv + Aging1$CD8mem
+Aging1$CD8T_NK<-Aging1$CD8T + Aging1$NK
+Aging1$Btotal<-Aging1$Bnv + Aging1$Bmem
+
+
+Aging1$scaled_Bnv<-(Aging1$Bnv/(Aging1$Bnv+Aging1$Bmem))*100
+Aging1$scaled_Bmem<-(Aging1$Bmem/(Aging1$Bnv+Aging1$Bmem))*100
+
+Aging1$scaled_CD4nv<-(Aging1$CD4nv/(Aging1$CD4nv+Aging1$CD4mem_reg))*100
+Aging1$scaled_CD4mem_reg<-(Aging1$CD4mem_reg/(Aging1$CD4nv+Aging1$CD4mem_reg))*100
+
+Aging1$scaled_CD8nv<-(Aging1$CD8nv/(Aging1$CD8nv+Aging1$CD8mem))*100
+Aging1$scaled_CD8mem<-(Aging1$CD8mem/(Aging1$CD8nv+Aging1$CD8mem))*100
+
+
+Aging1$scaled_LML<-(Aging1$Lym/(Aging1$Lym+Aging1$Mono))*100
+Aging1$scaled_LMM<-(Aging1$Mono/(Aging1$Lym+Aging1$Mono))*100
+
+
+Aging1$scaled_484<-(Aging1$CD4T/(Aging1$CD4T+Aging1$CD8T))*100
+Aging1$scaled_488<-(Aging1$CD8T/(Aging1$CD4T+Aging1$CD8T))*100
+
+Aging1$scaled_8NKM8NK<-(Aging1$CD8T_NK/(Aging1$CD8T_NK+Aging1$Mono))*100
+Aging1$scaled_8NKMM<-(Aging1$Mono/(Aging1$CD8T_NK+Aging1$Mono))*100
+
+Aging1$scaled_8B8<-(Aging1$CD8T/(Aging1$CD8T+Aging1$Btotal))*100
+Aging1$scaled_8BB<-(Aging1$Btotal/(Aging1$CD8T+Aging1$Btotal))*100
+
+
+#---------------------------------------------------------------------------------------------------------
+stackprojection<-Aging1[,c("scaled_Bnv","scaled_Bmem")]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(2,Aging1$Age)))
+group<-as.data.frame(stack(replicate(2,Aging1$agegroup)))
+stackprojection$region<-region$value
+stackprojection$group<-group$value
+colnames(stackprojection)<-c("Projection","CellType","Age","Age_Group")
+stackprojection$Age<-as.numeric(stackprojection$Age)
+stackprojection1<-stackprojection %>% filter(!is.na(stackprojection$Age))
+stackprojection2<-stackprojection1 %>% filter(CellType == "scaled_Bmem")
+stackprojection2<-stackprojection2 %>% filter(Projection != "NaN")
+stackprojection2$Projection<-stackprojection2$Projection/100
+ggplot(stackprojection2, aes(Age, Projection)) +
+  
+  #geom_smooth() +
+  geom_ribbon(aes(ymin = 0,ymax = predict(loess(Projection ~ Age))),
+              alpha = 0.3,fill = "magenta")+
+  geom_ribbon(aes(ymin = predict(loess(Projection ~ Age)),ymax = 1),
+              alpha = 0.3, fill = "#1B9E77") + ylab("Proportion")+
+  #scale_fill_manual("",values="grey12")+
+  scale_x_continuous(breaks=seq(0,100,10))+
+  ylim(0,1)+scale_y_continuous(breaks=seq(0,1,0.1))+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#---------------------------------------------------------------------------------------------
+stackprojection<-Aging1[,c("scaled_CD4nv","scaled_CD4mem_reg")]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(2,Aging1$Age)))
+group<-as.data.frame(stack(replicate(2,Aging1$agegroup)))
+stackprojection$region<-region$value
+stackprojection$group<-group$value
+colnames(stackprojection)<-c("Projection","CellType","Age","Age_Group")
+stackprojection$Age<-as.numeric(stackprojection$Age)
+stackprojection1<-stackprojection %>% filter(!is.na(stackprojection$Age))
+stackprojection2<-stackprojection1 %>% filter(CellType == "scaled_CD4mem_reg")
+stackprojection2<-stackprojection2 %>% filter(Projection != "NaN")
+stackprojection2$Projection<-stackprojection2$Projection/100
+ggplot(stackprojection2, aes(Age, Projection)) +
+  
+  #geom_smooth() +
+  geom_ribbon(aes(ymin = 0,ymax = predict(loess(Projection ~ Age))),
+              alpha = 0.3,fill = "darkblue")+
+  geom_ribbon(aes(ymin = predict(loess(Projection ~ Age)),ymax = 1),
+              alpha = 0.3, fill = "#D95F02") + ylab("Proportion")+
+  #scale_fill_manual("",values="grey12")+
+  scale_x_continuous(breaks=seq(0,100,10))+
+  ylim(0,1)+scale_y_continuous(breaks=seq(0,1,0.1))+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#-------------------------------------------------------------------------------------------------------
+stackprojection<-Aging1[,c("scaled_CD8nv","scaled_CD8mem")]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(2,Aging1$Age)))
+group<-as.data.frame(stack(replicate(2,Aging1$agegroup)))
+stackprojection$region<-region$value
+stackprojection$group<-group$value
+colnames(stackprojection)<-c("Projection","CellType","Age","Age_Group")
+stackprojection$Age<-as.numeric(stackprojection$Age)
+stackprojection1<-stackprojection %>% filter(!is.na(stackprojection$Age))
+stackprojection2<-stackprojection1 %>% filter(CellType == "scaled_CD8mem")
+stackprojection2<-stackprojection2 %>% filter(Projection != "NaN")
+stackprojection2$Projection<-stackprojection2$Projection/100
+ggplot(stackprojection2, aes(Age, Projection)) +
+  
+  #geom_smooth() +
+  geom_ribbon(aes(ymin = 0,ymax = predict(loess(Projection ~ Age))),
+              alpha = 0.3,fill =  "maroon")+
+  geom_ribbon(aes(ymin = predict(loess(Projection ~ Age)),ymax = 1),
+              alpha = 0.3, fill = "#7570B3") + ylab("Proportion")+
+  #scale_fill_manual("",values="grey12")+
+  scale_x_continuous(breaks=seq(0,100,10))+
+  ylim(0,1)+scale_y_continuous(breaks=seq(0,1,0.1))+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#-----------------------------------------------------------------------------------------------
+stackprojection<-Aging1[,c("scaled_LML","scaled_LMM")]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(2,Aging1$Age)))
+group<-as.data.frame(stack(replicate(2,Aging1$agegroup)))
+stackprojection$region<-region$value
+stackprojection$group<-group$value
+colnames(stackprojection)<-c("Projection","CellType","Age","Age_Group")
+stackprojection$Age<-as.numeric(stackprojection$Age)
+stackprojection1<-stackprojection %>% filter(!is.na(stackprojection$Age))
+stackprojection2<-stackprojection1 %>% filter(CellType == "scaled_LMM")
+stackprojection2<-stackprojection2 %>% filter(Projection != "NaN")
+stackprojection2$Projection<-stackprojection2$Projection/100
+ggplot(stackprojection2, aes(Age, Projection)) +
+  
+  #geom_smooth() +
+  geom_ribbon(aes(ymin = 0,ymax = predict(loess(Projection ~ Age))),
+              alpha = 0.3,fill =  "#E7298A")+
+  geom_ribbon(aes(ymin = predict(loess(Projection ~ Age)),ymax = 1),
+              alpha = 0.3, fill = "#D55E00") + ylab("Proportion")+
+  #scale_fill_manual("",values="grey12")+
+  scale_x_continuous(breaks=seq(0,100,10))+
+  ylim(0,1)+scale_y_continuous(breaks=seq(0,1,0.1))+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#-------------------------------------------------------------------------------------------------
+stackprojection<-Aging1[,c("scaled_484","scaled_488")]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(2,Aging1$Age)))
+group<-as.data.frame(stack(replicate(2,Aging1$agegroup)))
+stackprojection$region<-region$value
+stackprojection$group<-group$value
+colnames(stackprojection)<-c("Projection","CellType","Age","Age_Group")
+stackprojection$Age<-as.numeric(stackprojection$Age)
+stackprojection1<-stackprojection %>% filter(!is.na(stackprojection$Age))
+stackprojection2<-stackprojection1 %>% filter(CellType == "scaled_488")
+stackprojection2<-stackprojection2 %>% filter(Projection != "NaN")
+stackprojection2$Projection<-stackprojection2$Projection/100
+ggplot(stackprojection2, aes(Age, Projection)) +
+  
+  #geom_smooth() +
+  geom_ribbon(aes(ymin = 0,ymax = predict(loess(Projection ~ Age))),
+              alpha = 0.3,fill =  "#F0E442")+
+  geom_ribbon(aes(ymin = predict(loess(Projection ~ Age)),ymax = 1),
+              alpha = 0.3, fill = "#0072B2") + ylab("Proportion")+
+  #scale_fill_manual("",values="grey12")+
+  scale_x_continuous(breaks=seq(0,100,10))+
+  ylim(0,1)+scale_y_continuous(breaks=seq(0,1,0.1))+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#------------------------------------------------------------------------------------------------
+stackprojection<-Aging1[,c("scaled_8NKM8NK","scaled_8NKMM")]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(2,Aging1$Age)))
+group<-as.data.frame(stack(replicate(2,Aging1$agegroup)))
+stackprojection$region<-region$value
+stackprojection$group<-group$value
+colnames(stackprojection)<-c("Projection","CellType","Age","Age_Group")
+stackprojection$Age<-as.numeric(stackprojection$Age)
+stackprojection1<-stackprojection %>% filter(!is.na(stackprojection$Age))
+stackprojection2<-stackprojection1 %>% filter(CellType == "scaled_8NKMM")
+stackprojection2<-stackprojection2 %>% filter(Projection != "NaN")
+stackprojection2$Projection<-stackprojection2$Projection/100
+ggplot(stackprojection2, aes(Age, Projection)) +
+  
+  #geom_smooth() +
+  geom_ribbon(aes(ymin = 0,ymax = predict(loess(Projection ~ Age))),
+              alpha = 0.3,fill = "#E7298A")+
+  geom_ribbon(aes(ymin = predict(loess(Projection ~ Age)),ymax = 1),
+              alpha = 0.3, fill = "#009E73") + ylab("Proportion")+
+  #scale_fill_manual("",values="grey12")+
+  scale_x_continuous(breaks=seq(0,100,10))+
+  ylim(0,1)+scale_y_continuous(breaks=seq(0,1,0.1))+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#---------------------------------------------------------------------------------------------
+stackprojection<-Aging1[,c("scaled_8B8","scaled_8BB")]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(2,Aging1$Age)))
+group<-as.data.frame(stack(replicate(2,Aging1$agegroup)))
+stackprojection$region<-region$value
+stackprojection$group<-group$value
+colnames(stackprojection)<-c("Projection","CellType","Age","Age_Group")
+stackprojection$Age<-as.numeric(stackprojection$Age)
+stackprojection1<-stackprojection %>% filter(!is.na(stackprojection$Age))
+stackprojection2<-stackprojection1 %>% filter(CellType == "scaled_8BB")
+stackprojection2<-stackprojection2 %>% filter(Projection != "NaN")
+stackprojection2$Projection<-stackprojection2$Projection/100
+ggplot(stackprojection2, aes(Age, Projection)) +
+  
+  #geom_smooth() +
+  geom_ribbon(aes(ymin = 0,ymax = predict(loess(Projection ~ Age))),
+              alpha = 0.3,fill = "#56B4E9")+
+  geom_ribbon(aes(ymin = predict(loess(Projection ~ Age)),ymax = 1),
+              alpha = 0.3, fill = "#F0E442") + ylab("Proportion")+
+  #scale_fill_manual("",values="grey12")+
+  scale_x_continuous(breaks=seq(0,100,10))+
+  ylim(0,1)+scale_y_continuous(breaks=seq(0,1,0.1))+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+```
+
+
+
+##Supplementary Figure 15
+```{r, message=FALSE,error=FALSE,warning=FALSE}
+load("Aging_Pred.RDATA")
+stackprojection<-Aging1[,6:17]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(12,Aging1$Age)))
+group<-as.data.frame(stack(replicate(12,Aging1$agegroup)))
+stackprojection$region<-region$value
+stackprojection$group<-group$value
+colnames(stackprojection)<-c("Projection","CellType","Age","Age_Group")
+stackprojection$Age<-as.numeric(stackprojection$Age)
+stackprojection1<-stackprojection %>% filter(!is.na(stackprojection$Age))
+
+stackprojection2<-stackprojection1 %>% filter(CellType == "Bas" | CellType == "Eos" | CellType == "Mono" | CellType == "Neu" )
+stackprojection2$CellType<-factor(stackprojection2$CellType, levels=c("Mono","Neu","Bas","Eos"))
+
+
+cbbPalette <- c("#E7298A","#66A61E", "#E41A1C", "#3E8E93")
+
+ggplot(stackprojection2, aes(x=Age, y=Projection, colour = CellType) ) + 
+ # geom_point(size = 1)+
+  geom_smooth( method = "loess")+
+  scale_x_continuous(breaks=seq(0,100,10))+scale_color_manual(values=cbbPalette)+
+  scale_y_continuous(breaks=seq(0, 100, 10), limits=c(0, 100))+
+  ylab("Projection (%)")+xlab("Age")+#scale_colour_discrete(name = "Cell Type")+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+stackprojection2<-stackprojection1 %>% filter(CellType == "Bmem" | CellType == "Bnv" | CellType == "NK")
+stackprojection2$CellType<-factor(stackprojection2$CellType, levels=c("Bnv","NK","Bmem"))
+
+
+cbbPalette <- c("#1B9E77","#E6AB02","magenta")
+
+ggplot(stackprojection2, aes(x=Age, y=Projection, colour = CellType) ) + 
+  geom_point(size = 1)+
+  geom_smooth( method = "loess")+
+  scale_x_continuous(breaks=seq(0,100,10))+scale_color_manual(values=cbbPalette)+
+  scale_y_continuous(breaks=seq(0, 100, 10), limits=c(0, 40))+
+  ylab("Projection (%)")+xlab("Age")+#scale_colour_discrete(name = "Cell Type")+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#-----------------------------------------------------------------------------------------------------
+
+stackprojection2<-stackprojection1 %>% filter(CellType == "CD4mem"|CellType =="CD4nv"|CellType =="Treg")
+stackprojection2$CellType<-factor(stackprojection2$CellType, levels=c("CD4nv","Treg","CD4mem"))
+
+
+cbbPalette <- c("#D95F02","black","darkblue")
+
+ggplot(stackprojection2, aes(x=Age, y=Projection, colour = CellType) ) + 
+  #geom_point(size = 1)+
+  geom_smooth( method = "loess")+
+  scale_x_continuous(breaks=seq(0,100,10))+scale_color_manual(values=cbbPalette)+
+  ylim(-0.5,40)+
+  ylab("Projection (%)")+xlab("Age")+#scale_colour_discrete(name = "Cell Type")+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#-----------------------------------------------------------------------------------------------------------
+
+stackprojection2<-stackprojection1 %>% filter(CellType =="CD8mem"|CellType =="CD8nv")
+cbbPalette <- c("maroon", "#7570B3")
+
+ggplot(stackprojection2, aes(x=Age, y=Projection, colour = CellType) ) + 
+  geom_point(size = 1)+
+  geom_smooth( method = "loess")+
+  scale_x_continuous(breaks=seq(0,100,10))+scale_color_manual(values=cbbPalette)+
+  ylim(0,42)+
+  ylab("Projection (%)")+xlab("Age")+#scale_colour_discrete(name = "Cell Type")+
+  theme( legend.position="top",legend.title = element_text( size=23, 
+                                                            face="bold"),
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#---------------------------------------------------------------------------------------------------
+
+library(directlabels)
+
+stackprojection1$CellType<-factor(stackprojection1$CellType, levels=c("Neu","CD4nv","Bnv","Mono","NK","Treg","CD8nv","Bas","CD8mem","Eos","Bmem","CD4mem"))
+cbbPalette <- c("#66A61E", "#D95F02","#1B9E77","#E7298A",  "#E6AB02","black", "#7570B3", "#E41A1C", "maroon","#3E8E93","magenta","darkblue")
+
+ggplot(stackprojection1, aes(x=Age, y=Projection, colour = CellType) ) + 
+  #geom_point(aes(colour = CellType))+
+  geom_smooth( method = "loess")+
+  #geom_text(aes(label = CellType, colour = CellType,x = Inf, y = Projection), hjust = -.1)+ 
+  #geom_dl(aes(label = CellType,colour = CellType), method = "last.points", cex = 0.1)+
+  scale_x_continuous(breaks=seq(0,100,10))+scale_color_manual(values=cbbPalette)+
+  scale_y_continuous(breaks=seq(0, 100, 10))+
+  ylab("Projection (%)")+xlab("Age")+#scale_colour_discrete(name = "Cell Type")+
+  theme( legend.position="right",legend.title = element_text( size=23, face="bold"),
+         #legend.position = "none",
+         legend.text = element_text(size=23, 
+                                    face="bold"),
+         axis.text.x = element_text(size = 23, face = "bold" ),
+         axis.text.y = element_text(size = 23, face = "bold" ),
+         axis.title =  element_text( size = 30 , face="bold"))  + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#--------------------------------------------------------------------------------------------------
+```
+
+## Supplementary Figure 16
+```{r,message=FALSE,error=FALSE,warning=FALSE}
+eoMat <- getGEO("GSE62219")
+pheno <- pData(eoMat[[1]])
+pheno_62219<-as.data.frame(pheno)
+
+Aging1_62219<- Aging1[Aging1$ID %in% pheno_62219$geo_accession,]
+pheno_62219_ID<-pheno_62219 %>% select(geo_accession,title)
+pheno_62219_ID$subject<-substring(pheno_62219_ID$title,1,6)
+colnames(pheno_62219_ID)<-c("ID","title","subject")
+Aging1_62219<-inner_join(Aging1_62219,pheno_62219_ID,by = "ID")
+
+stackprojection<-Aging1_62219[,6:17]
+stackprojection<-as.data.frame(stack(stackprojection))
+region<-as.data.frame(stack(replicate(12,Aging1_62219$subject)))
+age<-as.data.frame(stack(replicate(12,Aging1_62219$Age)))
+stackprojection$age<-age$value
+stackprojection$region<-region$value
+colnames(stackprojection)<-c("Projection","CellType","Age","Sample")
+
+ggplot(stackprojection, aes( x= Age, y=Projection) )+ 
+  geom_point(aes(colour = Sample))+
+  geom_line(aes(colour = Sample))+xlim(c(0,5))+ ylab("Projection (%)")+
+  # geom_smooth( method = "loess")+
+  facet_wrap(~CellType)+
+  theme(
+    axis.text = element_text( size = 20 ),
+    #axis.text.x = element_text( size = 12  ),
+    axis.title = element_text( size = 30, face="bold"),#legend.position="none",
+    # The new stuff 
+    strip.text = element_text(size = 13),
+    legend.position='none'
+  ) +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+             panel.background = element_blank(), axis.line = element_line(colour = "black"))
+```
+

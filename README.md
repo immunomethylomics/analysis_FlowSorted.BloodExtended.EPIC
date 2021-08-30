@@ -1,3 +1,4 @@
+<a href="https://zenodo.org/badge/latestdoi/399234945"><img src="https://zenodo.org/badge/399234945.svg" alt="DOI"></a>
 # analysis_FlowSorted.BloodExtended.EPIC
 Code for the analysis included in the manuscript. Data is available on GEO or ArrayExpress.
 The analysis comprises the selection of the library.

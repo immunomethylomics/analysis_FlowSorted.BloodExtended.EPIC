@@ -7,7 +7,7 @@ External validation (adult, umbilical cord samples).
 Validation using independent artificial mixtures.
 Applications.
 
-Code includes figures in the paper (QC8a.Rmd) and additional analyses performed for the QC of the data.
+Code includes figures in the paper (QC8a.Rmd) and additional analyses (Ext_Suppl_Code.Rmd) performed for the QC of the data. All the figures were knitted using the original objects.
 
 
 
